@@ -1,0 +1,45 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+"""
+Main module.
+"""
+__author__		=	"Yuval Pruss"
+__copyright__	= 	"Copyright 2016, The Winner Project"
+
+from db import DB
+from scarper import Scarper
+from winner import WinnerLogic
+
+def main():
+	#Connect to DB
+	db = DB('127.0.0.1', 'root', 'Password1', 'winner')
+
+	winnerLogic = WinnerLogic()
+
+	scarper = Scarper('http://winner.co.il')
+
+	scarper.scarpeSite()
+
+	contents = scarper.findElement(htmlElement='span', htmlClass='outcomedescription', encodedResult=True)
+	prices = scarper.findElement(htmlElement='span', htmlClass='formatted_price')
+
+	groupByGames = winnerLogic.groupTeamsByGames(contents)
+
+	#Truncate table
+	db.truncate_table('bets')
+
+	#Insert details into DB
+	sql = "insert into bets (scarping_time, team, ratio, bet_id) values "
+
+	for x in xrange(len(contents)):
+		sql += ("(current_timestamp, '%s', %s, %s) , ") % \
+		(contents[x], prices[x], groupByGames[x])
+
+	sql = sql[:-2]
+	
+	db.exe(sql)
+
+	db.close()
+
+if __name__ == '__main__':
+	main()
