@@ -1,2 +1,2 @@
 #!/bin/bash
-node winner.js 
+node winner_highRatio.js 
